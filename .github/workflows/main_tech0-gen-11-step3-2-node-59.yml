@@ -1,3 +1,16 @@
+name: Build and deploy Next.js app to Azure Web App - tech0-gen-11-step3-2-node-59
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: tech0-gen-11-step3-2-node-59
+  AZURE_WEBAPP_PACKAGE_PATH: '.'
+  NODE_VERSION: '20.x'
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -5,16 +18,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      # Node.js環境のセットアップ (これはそのまま)
+      # Node.js環境のセットアップ (キャッシュなし)
       - name: Set up Node.js version
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           
-      # ★★★最終修正 1：ビルド処理をrsyncに置き換え、パスをリポジトリルートに同期★★★
-      - name: Install, Build, and Prepare Artifact
+      # ★★★最終修正：インストール、ビルド、コピー、rsyncを一つのステップに統合★★★
+      - name: Install, Build, and Prepare Artifact (rsync)
         run: |
-          # 1. frontend ディレクトリに移動し、作業ディレクトリを固定
+          # 1. frontend ディレクトリに移動
           echo "Moving to frontend directory..."
           cd ./frontend
           
@@ -31,9 +44,9 @@ jobs:
           mkdir -p ./.next/standalone/node_modules 
           cp -r ./node_modules/* ./.next/standalone/node_modules/ || true 
           
-          # ★★★最終修正：ビルド成果物 (.next) をリポジトリルートに確実に同期★★★
-          # .next フォルダ全体をリポジトリルートに同期（コピー）する
+          # 5. ビルド成果物 (.next) をリポジトリルートに確実に同期
           echo "Syncing .next to repository root using rsync..."
+          # .next フォルダ全体をリポジトリルート (一つ上のディレクトリ ../) に同期
           rsync -avz ./.next ../
 
       # アーティファクトのアップロードステップ
@@ -41,8 +54,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          # ★★★修正 2：アップロードパスをリポジトリルートの.nextに修正★★★
-          path: ./.next 
+          path: ./.next # リポジトリルートに同期された .next を指定
 
   deploy:
     runs-on: ubuntu-latest
