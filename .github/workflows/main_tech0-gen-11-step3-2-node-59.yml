@@ -14,9 +14,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./frontend            # ★作業ディレクトリをfrontendに指定
+    # defaults:
+    #   run:
+    #     working-directory: ./frontend            # ★defaultsは削除せず、コマンドで明示する
 
     steps:
       - uses: actions/checkout@v4
@@ -29,13 +29,13 @@ jobs:
           cache: 'npm'
           cache-dependency-path: './frontend/package-lock.json' 
       
-      # 依存関係のインストール
+      # ★★★最終修正コマンド 1：npm install の実行 (リポジトリルートを基準にインストール)★★★
       - name: npm install
-        run: npm install
+        run: npm install --prefix ./frontend 
 
-      # ★★★最終修正コマンド：npm run buildの実行 (defaults設定に任せ、冗長なprefixを削除)★★★
+      # ★★★最終修正コマンド 2：npm run buildの実行 (リポジトリルートを基準にビルド)★★★
       - name: npm run build
-        run: npm run build 
+        run: npm run build --prefix ./frontend 
 
       # デプロイ成果物のアップロード (.nextフォルダ全体をデプロイ)
       - name: Upload artifact for deployment
