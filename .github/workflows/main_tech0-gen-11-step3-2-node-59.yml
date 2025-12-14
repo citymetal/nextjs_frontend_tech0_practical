@@ -27,18 +27,17 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: './frontend/package-lock.json' # ★frontend内の依存ファイルを参照
+          cache-dependency-path: './frontend/package-lock.json' 
       
       # 依存関係のインストール
       - name: npm install
         run: npm install
 
-      # Next.jsのビルド実行 (standalone出力)
+      # ★★★修正箇所 1：Next.jsのビルド実行 (prefixを指定し、ビルドパスの問題を解消)★★★
       - name: npm run build
-        run: npm run build
+        run: npm run build --prefix ./frontend 
 
-      # ★★★修正箇所★★★
-      # デプロイ成果物のアップロード (server.jsと実行に必要なファイルをすべて含む.nextフォルダ全体)
+      # ★★★修正箇所 2：デプロイ成果物のアップロード (.nextフォルダ全体をデプロイ)★★★
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
