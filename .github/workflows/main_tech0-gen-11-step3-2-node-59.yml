@@ -8,7 +8,6 @@ on:
 
 env:
   AZURE_WEBAPP_NAME: tech0-gen-11-step3-2-node-59
-  AZURE_WEBAPP_PACKAGE_PATH: '.' 
   NODE_VERSION: '20.x'
 
 jobs:
@@ -34,26 +33,28 @@ jobs:
         run: npm run build || true 
         working-directory: ./frontend
 
-      # ★★★修正 1：ビルド成果物 (.next) をリポジトリルートに移動★★★
-      - name: Move .next to Root for Artifact Upload
-        run: mv ./frontend/.next ./.next
-        
-      # ★★★修正 2：node_modules をアップロードに含める (Publish Profileが認識できるよう)★★★
-      - name: Move node_modules to Root for Deployment
-        run: mv ./frontend/node_modules ./.
-        
-      # ★★★修正 3：package.json などルートに必要なファイルも移動★★★
-      - name: Move Root Files
+      # ★★★究極の修正 1：デプロイパッケージの作成（zip化）★★★
+      - name: Create Deployment Package
         run: |
-          mv ./frontend/package.json ./.
-          mv ./frontend/next.config.js ./.
-
-      # ★★★修正 4：アーティファクトのアップロード (ビルドのみを目的とする)★★★
-      - name: Upload artifact for deployment
+          # frontend内の必要なファイルとフォルダをコピーし、zipに圧縮
+          mkdir -p deploy_package
+          cp -r ./frontend/.next ./deploy_package/
+          cp -r ./frontend/node_modules ./deploy_package/
+          cp ./frontend/package.json ./deploy_package/
+          cp ./frontend/next.config.js ./deploy_package/
+          # サーバー起動に必要なファイルをdeploy_packageのルートに配置
+          
+          # zipファイル作成
+          cd deploy_package
+          zip -r ../app.zip .
+          cd ..
+          
+      # ★★★究極の修正 2：app.zipをアーティファクトとしてアップロード★★★
+      - name: Upload deployment artifact
         uses: actions/upload-artifact@v4
         with:
-          name: node-app
-          path: ./.next 
+          name: node-app-zip
+          path: ./app.zip
           
   deploy:
     runs-on: ubuntu-latest
@@ -63,23 +64,22 @@ jobs:
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
-      - name: Download artifact from build job
+      # ★★★究極の修正 3：zipファイルをダウンロード★★★
+      - name: Download deployment artifact
         uses: actions/download-artifact@v4
         with:
-          name: node-app
+          name: node-app-zip
           
-      # ★★★修正 5：デプロイパッケージの準備（ダウンロードした.nextとローカルの他のファイルを使用）★★★
-      - name: Prepare deployment directory
-        run: |
-          # ダウンロードした.nextフォルダをデプロイに必要な場所に配置する
-          mv ./node-app ./.next
-          
-      # ★★★修正 6：Azure Web Appへのデプロイ（Publish Profileに依存）★★★
+      # ★★★究極の修正 4：zipファイルを展開★★★
+      - name: Unzip deployment package
+        run: unzip app.zip
+
+      # ★★★究極の修正 5：Azure Web Appへのデプロイ（パッケージは展開後のルート）★★★
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
-          package: . # ルートに.nextとnode_modules、package.jsonがあるため
+          package: . # 展開後のカレントディレクトリ（ルート）をパッケージとして指定
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
