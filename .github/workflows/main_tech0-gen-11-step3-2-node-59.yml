@@ -36,7 +36,7 @@ jobs:
       # デプロイパッケージの作成（zip化）
       - name: Create Deployment Package
         run: |
-          # frontend内の必要なファイルとフォルダをコピーし、zipに圧縮
+          # zipファイル作成に必要なファイルをコピー
           mkdir -p deploy_package
           cp -r ./frontend/.next ./deploy_package/
           cp -r ./frontend/node_modules ./deploy_package/
@@ -73,12 +73,19 @@ jobs:
       - name: Unzip deployment package
         run: unzip app.zip
 
-      # ★★★究極の修正：Azure Web Appへのデプロイアクションを@v3に復元★★★
+      # ★★★究極の修正 1：Publish ProfileでAzureにログイン★★★
+      - name: Azure Login using Publish Profile
+        uses: azure/login@v1 # v1を強制
+        with:
+          creds: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          auth-type: 'PUBLISHPROFILE' # Publish Profileであることを明示
+          
+      # ★★★究極の修正 2：デプロイアクション（publish-profileを削除）★★★
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3 # ★★★v3に戻す★★★
+        uses: azure/webapps-deploy@v3 
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
-          package: . # 展開後のカレントディレクトリ（ルート）をパッケージとして指定
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }} # ★★★シークレットを直接渡す★★★
+          package: . # 展開後のカレントディレクトリ
+          # publish-profile パラメータを削除し、Loginアクションの認証に依存する
