@@ -14,10 +14,6 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # ★★★★修正 1：defaultsセクションを削除 (コマンドで明示するため) ★★★★
-    # defaults:
-    #   run:
-    #     working-directory: ./frontend
 
     steps:
       - uses: actions/checkout@v4
@@ -30,17 +26,17 @@ jobs:
           cache: 'npm'
           cache-dependency-path: './frontend/package-lock.json' 
       
-      # ★★★★修正 2：npm install で作業ディレクトリを明示的に指定 ★★★★
+      # ★★★最終修正：npm install の実行 (working-directoryを明示)★★★
       - name: npm install
         run: npm install
         working-directory: ./frontend 
 
-      # ★★★★修正 3：npm run buildで作業ディレクトリを明示的に指定し、コマンドはシンプルに保つ★★★★
+      # ★★★最終修正：npm run buildの実行 (working-directoryを明示)★★★
       - name: npm run build
         run: npm run build
         working-directory: ./frontend 
 
-      # デプロイ成果物のアップロード
+      # デプロイ成果物のアップロード (.nextフォルダ全体をデプロイ)
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
