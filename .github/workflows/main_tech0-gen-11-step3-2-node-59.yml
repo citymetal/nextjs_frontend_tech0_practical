@@ -73,9 +73,7 @@ jobs:
       - name: Unzip deployment package
         run: unzip app.zip
 
-      # ★★★究極の修正 1：Azure Login ステップを削除★★★
-      
-      # ★★★究極の修正 2：Azure Web Appへのデプロイ（シークレットを直接渡す）★★★
+      # Azure Web Appへのデプロイ（修正後のシークレット名を使用）
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3 
@@ -83,4 +81,5 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
           package: . 
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          # ★★★修正点：シークレット名を指定された名前に変更★★★
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D939D61B8137457EBCA6E559E44599F2 }}
