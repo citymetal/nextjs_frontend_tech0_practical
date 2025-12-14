@@ -32,14 +32,14 @@ jobs:
       - name: npm run build
         run: cd ./frontend && npm run build
 
-      # ★★★最終修正 1：依存関係コピーを単独ステップにする★★★
+      # ★★★修正 1：依存関係コピーのステップ (runコマンドのみ)★★★
       - name: Copy necessary dependencies to standalone directory
         run: |
           # Next.jsのStandaloneに必要な依存関係を強制的にコピー
           mkdir -p ./frontend/.next/standalone/node_modules 
           cp -r ./frontend/node_modules/* ./frontend/.next/standalone/node_modules/
 
-      # ★★★最終修正 2：アーティファクトのアップロードを単独ステップにする★★★
+      # ★★★修正 2：アーティファクトのアップロードステップ (usesコマンドのみ)★★★
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
