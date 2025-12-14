@@ -39,9 +39,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          # ★最終修正: アップロードパスをビルド結果のフォルダ(.next/standalone)に変更
-          # working-directory: ./frontend が有効なため、パスは ./.next/standalone になります。
-          path: ./.next/standalone
+          # ★★★最終修正箇所★★★
+          # アップロードパスをビルド結果のフォルダ(frontend/.next/standalone)に変更
+          # working-directoryの設定が効かないため、リポジトリのルートからのパスで指定します。
+          path: ./frontend/.next/standalone
 
   deploy:
     runs-on: ubuntu-latest
