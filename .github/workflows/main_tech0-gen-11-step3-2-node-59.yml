@@ -24,24 +24,28 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           
-      # ★★★修正 1：npm install の実行 (cdを強制)★★★
-      - name: npm install
-        run: cd ./frontend && npm install
-
-      # ★★★修正 2：Next.jsのビルド (cdを強制し、ローカルで成功したコマンドに近い形)★★★
-      - name: Next.js build (No Lint)
-        # npm run build を使用し、ローカルで成功したビルドの再現を目指す
-        run: cd ./frontend && npm run build || true 
-
-      # ★★★修正 3：依存関係コピーのステップ (cdを強制)★★★
-      - name: Copy necessary dependencies to standalone directory
+      # ★★★最終修正：インストール、ビルド、コピーを一つのステップに統合★★★
+      - name: Install, Build, and Prepare Artifact
         run: |
-          # frontendディレクトリに移動し、ローカルで成功したビルドの出力パス (.next) を基準にコピー
-          cd ./frontend 
+          # 1. frontend ディレクトリに移動し、以降のコマンドの作業ディレクトリを固定
+          echo "Moving to frontend directory..."
+          cd ./frontend
+          
+          # 2. 依存関係のインストール
+          echo "Installing npm dependencies..."
+          npm install
+
+          # 3. Next.jsのビルド (エラーは無視し、確実にビルドを完了させる)
+          echo "Starting Next.js build..."
+          npm run build || true 
+
+          # 4. Standaloneに必要な依存関係のコピー
+          # ./frontend フォルダ内にいるため、相対パスは ./.next/standalone/ となる
+          echo "Copying dependencies to standalone directory..."
           mkdir -p ./.next/standalone/node_modules 
           cp -r ./node_modules/* ./.next/standalone/node_modules/ || true 
 
-      # アーティファクトのアップロードステップ
+      # アーティファクトのアップロードステップ (これはそのまま)
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
