@@ -1,3 +1,16 @@
+name: Build and deploy Next.js app to Azure Web App - tech0-gen-11-step3-2-node-59
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: tech0-gen-11-step3-2-node-59
+  AZURE_WEBAPP_PACKAGE_PATH: '.'
+  NODE_VERSION: '20.x'
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -5,13 +18,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      # Node.js環境のセットアップ (これはそのまま)
+      # Node.js環境のセットアップ (キャッシュなし)
       - name: Set up Node.js version
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           
-      # ★★★究極の修正：全処理を統合し、ビルド成果物をルートに確実に配置★★★
+      # インストール、ビルド、コピー、rsyncを一つのステップに統合
       - name: Install, Build, and Prepare Artifact
         run: |
           # 1. frontend ディレクトリに移動し、作業ディレクトリを固定
@@ -26,15 +39,13 @@ jobs:
           echo "Starting Next.js build..."
           npm run build || true 
 
-          # 4. Standaloneに必要な依存関係のコピー（rsyncでnode_modules全体をコピー）
+          # 4. Standaloneに必要な依存関係のコピー (rsyncでnode_modules全体をコピー)
           echo "Copying dependencies to standalone directory..."
           mkdir -p ./.next/standalone/node_modules 
-          # cp -r の代わりに rsync を使用してファイルシステムの不整合を回避
           rsync -avz ./node_modules/ ./.next/standalone/node_modules/ || true 
           
           # 5. ビルド成果物 (.next) をリポジトリルートに確実に同期
           echo "Syncing .next to repository root using rsync..."
-          # .next フォルダ全体をリポジトリルート (一つ上のディレクトリ ../) に同期
           rsync -avz ./.next ../
 
       # アーティファクトのアップロードステップ
@@ -42,5 +53,27 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: ./.next # リポジトリルートに同期された .next を指定
-# ... (deploy ジョブは省略) ...
+          path: ./.next 
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: node-app
+          
+      # Azure Web Appへのデプロイ
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          slot-name: 'Production'
+          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
