@@ -24,36 +24,29 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           
-      # インストール、ビルド、コピー、rsyncを一つのステップに統合
-      - name: Install, Build, and Prepare Artifact
+      # ★★★修正 1：npm install (working-directoryでパスを固定)★★★
+      - name: npm install
+        run: npm install
+        working-directory: ./frontend 
+
+      # ★★★修正 2：Next.jsのビルド (working-directoryでパスを固定)★★★
+      - name: Next.js build (No Lint)
+        run: npm run build || true 
+        working-directory: ./frontend
+
+      # ★★★修正 3：依存関係のコピー (working-directoryでパスを固定)★★★
+      - name: Copy necessary dependencies to standalone directory
         run: |
-          # 1. frontend ディレクトリに移動し、作業ディレクトリを固定
-          echo "Moving to frontend directory..."
-          cd ./frontend
-          
-          # 2. 依存関係のインストール
-          echo "Installing npm dependencies..."
-          npm install
-
-          # 3. Next.jsのビルド (エラーは無視)
-          echo "Starting Next.js build..."
-          npm run build || true 
-
-          # 4. Standaloneに必要な依存関係のコピー (rsyncでnode_modules全体をコピー)
-          echo "Copying dependencies to standalone directory..."
           mkdir -p ./.next/standalone/node_modules 
-          rsync -avz ./node_modules/ ./.next/standalone/node_modules/ || true 
-          
-          # 5. ビルド成果物 (.next) をリポジトリルートに確実に同期
-          echo "Syncing .next to repository root using rsync..."
-          rsync -avz ./.next ../
+          cp -r ./node_modules/* ./.next/standalone/node_modules/ || true
+        working-directory: ./frontend 
 
       # アーティファクトのアップロードステップ
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: ./.next 
+          path: ./frontend/.next # ★★★アップロードパスを元の場所に戻す★★★
 
   deploy:
     runs-on: ubuntu-latest
