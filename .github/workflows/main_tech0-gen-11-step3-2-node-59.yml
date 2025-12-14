@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # ★追加1: 作業場所をfrontendフォルダの中に固定する
+    # 作業場所をfrontendフォルダの中に固定する
     defaults:
       run:
         working-directory: ./frontend
@@ -26,7 +26,7 @@ jobs:
         with:
           node-version: '20.x'
           cache: 'npm'
-          # ★追加2: キャッシュ用のファイル場所を明示的に指定
+          # キャッシュ用のファイル場所を明示的に指定
           cache-dependency-path: ./frontend/package-lock.json
 
       - name: Install dependencies
@@ -39,8 +39,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          # ★変更: リポジトリ全体(.)ではなく、frontendの中身だけを送る
-          path: ./frontend
+          # ★最終修正: アップロードパスをビルド結果のフォルダ(.next/standalone)に変更
+          # working-directory: ./frontend が有効なため、パスは ./.next/standalone になります。
+          path: ./.next/standalone
 
   deploy:
     runs-on: ubuntu-latest
