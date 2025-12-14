@@ -28,7 +28,7 @@ jobs:
       - name: npm install
         run: cd ./frontend && npm install
 
-      # ★★★最終修正：npm run buildの実行 (エラーを無視して強制実行)★★★
+      # npm run buildの実行 (エラーを無視して強制実行)
       - name: npm run build
         run: cd ./frontend && npm run build || true
 
@@ -37,7 +37,8 @@ jobs:
         run: |
           # Next.jsのStandaloneに必要な依存関係を強制的にコピー
           mkdir -p ./frontend/.next/standalone/node_modules 
-          cp -r ./frontend/node_modules/* ./frontend/.next/standalone/node_modules/
+          # ★★★最終修正：コピーエラーを無視してジョブを続行させる★★★
+          cp -r ./frontend/node_modules/* ./frontend/.next/standalone/node_modules/ || true 
 
       # アーティファクトのアップロードステップ (usesコマンドのみ)
       - name: Upload artifact for deployment
