@@ -23,15 +23,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: './frontend/package-lock.json' 
+          # ★★★最終修正：キャッシュを削除★★★
+          # cache: 'npm'
+          # cache-dependency-path: './frontend/package-lock.json' 
       
-      # ★★★最終修正：npm install の実行 (working-directoryを明示)★★★
+      # npm install の実行 (working-directoryを明示)
       - name: npm install
         run: npm install
         working-directory: ./frontend 
 
-      # ★★★最終修正：npm run buildの実行 (working-directoryを明示)★★★
+      # npm run buildの実行 (working-directoryを明示)
       - name: npm run build
         run: npm run build
         working-directory: ./frontend 
