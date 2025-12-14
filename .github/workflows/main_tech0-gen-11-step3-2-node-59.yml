@@ -4,34 +4,44 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      # ... (中略：Set up Node.js version) ...
+      
+      # Node.js環境のセットアップ (これはそのまま)
+      - name: Set up Node.js version
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
           
-      # インストール、ビルド、コピーを一つのステップに統合 (中略)
+      # ★★★最終修正 1：ビルド処理をrsyncに置き換え、パスをリポジトリルートに同期★★★
       - name: Install, Build, and Prepare Artifact
         run: |
           # 1. frontend ディレクトリに移動し、作業ディレクトリを固定
+          echo "Moving to frontend directory..."
           cd ./frontend
           
-          # 2. 依存関係のインストール (npm install)
+          # 2. 依存関係のインストール
+          echo "Installing npm dependencies..."
           npm install
 
-          # 3. Next.jsのビルド (npm run build || true)
+          # 3. Next.jsのビルド (エラーは無視)
+          echo "Starting Next.js build..."
           npm run build || true 
 
-          # 4. Standaloneに必要な依存関係のコピー (cp -r ...)
+          # 4. Standaloneに必要な依存関係のコピー
+          echo "Copying dependencies to standalone directory..."
           mkdir -p ./.next/standalone/node_modules 
           cp -r ./node_modules/* ./.next/standalone/node_modules/ || true 
-
-          # ★★★最終修正 1：ビルド成果物をリポジトリルートに移動★★★
-          echo "Moving ./.next to repository root..."
-          mv ./.next ../.next 
+          
+          # ★★★最終修正：ビルド成果物 (.next) をリポジトリルートに確実に同期★★★
+          # .next フォルダ全体をリポジトリルートに同期（コピー）する
+          echo "Syncing .next to repository root using rsync..."
+          rsync -avz ./.next ../
 
       # アーティファクトのアップロードステップ
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          # ★★★最終修正 2：アップロードパスをリポジトリルートの.nextに修正★★★
+          # ★★★修正 2：アップロードパスをリポジトリルートの.nextに修正★★★
           path: ./.next 
 
   deploy:
@@ -54,6 +64,5 @@ jobs:
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
-          # ★★★最終修正 3：デプロイされるファイルはルートに移動した.nextフォルダ★★★
           package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
