@@ -18,24 +18,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      # Node.js環境のセットアップ
+      # Node.js環境のセットアップ (キャッシュなし)
       - name: Set up Node.js version
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          # ★★★最終修正：キャッシュを削除★★★
-          # cache: 'npm'
-          # cache-dependency-path: './frontend/package-lock.json' 
-      
-      # npm install の実行 (working-directoryを明示)
+          
+      # ★★★最終修正：npm install の実行 (シェル内でcdを強制)★★★
       - name: npm install
-        run: npm install
-        working-directory: ./frontend 
+        run: cd ./frontend && npm install
 
-      # npm run buildの実行 (working-directoryを明示)
+      # ★★★最終修正：npm run buildの実行 (シェル内でcdを強制)★★★
       - name: npm run build
-        run: npm run build
-        working-directory: ./frontend 
+        run: cd ./frontend && npm run build
 
       # デプロイ成果物のアップロード (.nextフォルダ全体をデプロイ)
       - name: Upload artifact for deployment
