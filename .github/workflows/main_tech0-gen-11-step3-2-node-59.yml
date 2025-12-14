@@ -18,35 +18,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      # Node.js環境のセットアップ (キャッシュなし)
+      # Node.js環境のセットアップ (これはそのまま)
       - name: Set up Node.js version
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           
-      # ★★★修正 1：npm install (working-directoryでパスを固定)★★★
+      # npm install
       - name: npm install
         run: npm install
         working-directory: ./frontend 
 
-      # ★★★修正 2：Next.jsのビルド (working-directoryでパスを固定)★★★
+      # Next.jsのビルド
       - name: Next.js build (No Lint)
         run: npm run build || true 
         working-directory: ./frontend
 
-      # ★★★修正 3：依存関係のコピー (working-directoryでパスを固定)★★★
-      - name: Copy necessary dependencies to standalone directory
-        run: |
-          mkdir -p ./.next/standalone/node_modules 
-          cp -r ./node_modules/* ./.next/standalone/node_modules/ || true
-        working-directory: ./frontend 
+      # ★★★究極の修正 1：依存関係のコピー (cp -r) ステップを完全に削除★★★
 
+      # ★★★究極の修正 2：ビルド成果物 (.next) をリポジトリルートに移動★★★
+      - name: Move .next to Root for Artifact Upload
+        run: mv ./frontend/.next ./.next
+        
       # アーティファクトのアップロードステップ
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: ./frontend/.next # ★★★アップロードパスを元の場所に戻す★★★
+          path: ./.next # ★★★アップロードパスをルートの .next に修正★★★
 
   deploy:
     runs-on: ubuntu-latest
