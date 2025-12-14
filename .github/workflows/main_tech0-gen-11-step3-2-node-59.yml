@@ -73,19 +73,14 @@ jobs:
       - name: Unzip deployment package
         run: unzip app.zip
 
-      # ★★★究極の修正 1：Publish ProfileでAzureにログイン★★★
-      - name: Azure Login using Publish Profile
-        uses: azure/login@v1 # v1を強制
-        with:
-          creds: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          auth-type: 'PUBLISHPROFILE' # Publish Profileであることを明示
-          
-      # ★★★究極の修正 2：デプロイアクション（publish-profileを削除）★★★
+      # ★★★究極の修正 1：Azure Login ステップを削除★★★
+      
+      # ★★★究極の修正 2：Azure Web Appへのデプロイ（シークレットを直接渡す）★★★
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3 
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
-          package: . # 展開後のカレントディレクトリ
-          # publish-profile パラメータを削除し、Loginアクションの認証に依存する
+          package: . 
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
