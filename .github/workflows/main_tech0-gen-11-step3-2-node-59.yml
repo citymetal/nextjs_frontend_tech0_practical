@@ -8,7 +8,6 @@ on:
 
 env:
   AZURE_WEBAPP_NAME: tech0-gen-11-step3-2-node-59
-  # ★★★修正 1：パッケージパスをルートにする (デプロイパッケージがルートにあるため)★★★
   AZURE_WEBAPP_PACKAGE_PATH: '.' 
   NODE_VERSION: '20.x'
 
@@ -35,15 +34,20 @@ jobs:
         run: npm run build || true 
         working-directory: ./frontend
 
-      # ★★★究極の修正 2：デプロイ準備のため、frontend全体をルートに移動★★★
+      # デプロイパッケージ準備 (frontend全体をルートに移動)
       - name: Prepare deployment package
         run: |
           # frontend の内容 (.next, node_modules, package.json, next.config.js) をルートに移動
           mv ./frontend/* ./.
           mv ./frontend/.next ./.
-          # ★注意：.nextは別コマンドで移動しないと、mv ./frontend/* ./. でスキップされる場合がある
 
-      # ★★★究極の修正 3：アーティファクトアップロードを削除し、直接デプロイ★★★
+      # ★★★究極の修正 1：Azureログインステップの追加★★★
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+
+      # ★★★究極の修正 2：デプロイアクションを継続★★★
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
@@ -52,5 +56,3 @@ jobs:
           slot-name: 'Production'
           package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-
-# ★★★究極の修正 4：deploy ジョブを完全に削除★★★
