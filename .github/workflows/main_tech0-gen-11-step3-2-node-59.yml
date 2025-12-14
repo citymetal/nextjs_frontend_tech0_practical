@@ -14,6 +14,10 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # ★★★修正 1：defaultsを復活させ、作業ディレクトリを固定する★★★
+    defaults:
+      run:
+        working-directory: ./frontend 
 
     steps:
       - uses: actions/checkout@v4
@@ -24,22 +28,23 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           
-      # npm install の実行 (シェル内でcdを強制)
+      # ★★★修正 2：npm install のみ working-directory を明示的に指定★★★
       - name: npm install
-        run: cd ./frontend && npm install
+        run: npm install
+        working-directory: ./frontend # defaultsと組み合わせることで確実性を高める
 
-      # npm run buildの実行 (シェル内でcdを強制)
+      # ★★★修正 3：npm run build は defaults に依存させるため、シンプルなコマンドに戻す★★★
       - name: npm run build
-        run: cd ./frontend && npm run build
+        run: npm run build 
 
-      # ★★★修正 1：依存関係コピーのステップ (runコマンドのみ)★★★
+      # 依存関係コピーのステップ (runコマンドのみ)
       - name: Copy necessary dependencies to standalone directory
         run: |
-          # Next.jsのStandaloneに必要な依存関係を強制的にコピー
-          mkdir -p ./frontend/.next/standalone/node_modules 
-          cp -r ./frontend/node_modules/* ./frontend/.next/standalone/node_modules/
+          # defaults: ./frontend の中で実行される
+          mkdir -p ./.next/standalone/node_modules 
+          cp -r ./node_modules/* ./.next/standalone/node_modules/
 
-      # ★★★修正 2：アーティファクトのアップロードステップ (usesコマンドのみ)★★★
+      # アーティファクトのアップロードステップ (usesコマンドのみ)
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
