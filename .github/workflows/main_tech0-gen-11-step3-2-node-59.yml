@@ -7,16 +7,17 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: tech0-gen-11-step3-2-node-59    # 設定したWeb App名
-  AZURE_WEBAPP_PACKAGE_PATH: '.'                 # デプロイパッケージのパス
-  NODE_VERSION: '20.x'                           # Node.js バージョン
+  AZURE_WEBAPP_NAME: tech0-gen-11-step3-2-node-59
+  AZURE_WEBAPP_PACKAGE_PATH: '.'
+  NODE_VERSION: '20.x'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    # ★★★★修正 1：defaultsセクションを削除 (コマンドで明示するため) ★★★★
     # defaults:
     #   run:
-    #     working-directory: ./frontend            # ★defaultsは削除せず、コマンドで明示する
+    #     working-directory: ./frontend
 
     steps:
       - uses: actions/checkout@v4
@@ -29,20 +30,21 @@ jobs:
           cache: 'npm'
           cache-dependency-path: './frontend/package-lock.json' 
       
-      # ★★★最終修正コマンド 1：npm install の実行 (リポジトリルートを基準にインストール)★★★
+      # ★★★★修正 2：npm install で作業ディレクトリを明示的に指定 ★★★★
       - name: npm install
-        run: npm install --prefix ./frontend 
+        run: npm install
+        working-directory: ./frontend 
 
-      # ★★★最終修正コマンド 2：npm run buildの実行 (リポジトリルートを基準にビルド)★★★
+      # ★★★★修正 3：npm run buildで作業ディレクトリを明示的に指定し、コマンドはシンプルに保つ★★★★
       - name: npm run build
-        run: npm run build --prefix ./frontend 
+        run: npm run build
+        working-directory: ./frontend 
 
-      # デプロイ成果物のアップロード (.nextフォルダ全体をデプロイ)
+      # デプロイ成果物のアップロード
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          # Next.jsの実行に必要な.nextフォルダ全体をデプロイ対象とする
           path: ./frontend/.next 
 
   deploy:
@@ -65,6 +67,5 @@ jobs:
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
-          # デプロイファイルをそのままWeb Appのルートに展開
           package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
