@@ -9,6 +9,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    # ★追加1: 作業場所をfrontendフォルダの中に固定する
+    defaults:
+      run:
+        working-directory: ./frontend
+
     permissions:
       contents: read
 
@@ -20,6 +26,8 @@ jobs:
         with:
           node-version: '20.x'
           cache: 'npm'
+          # ★追加2: キャッシュ用のファイル場所を明示的に指定
+          cache-dependency-path: ./frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -31,7 +39,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .   # ← リポジトリ直下をアップロード
+          # ★変更: リポジトリ全体(.)ではなく、frontendの中身だけを送る
+          path: ./frontend
 
   deploy:
     runs-on: ubuntu-latest
@@ -48,5 +57,5 @@ jobs:
         with:
           app-name: 'tech0-gen-11-step3-2-node-59'
           slot-name: 'Production'
-          package: .      # ← これもルートでOK
+          package: .
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D939D61B8137457EBCA6E559E44599F2 }}
