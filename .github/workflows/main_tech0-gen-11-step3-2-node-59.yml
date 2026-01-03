@@ -29,20 +29,30 @@ jobs:
         run: npm run build || true 
         working-directory: ./frontend
         env:
+          # ビルド時にバックエンドURLを埋め込みます
           NEXT_PUBLIC_API_ENDPOINT: https://tech0-gen-11-step3-2-py-59.azurewebsites.net        
 
       - name: Create Deployment Package
         run: |
           mkdir -p deploy_package
-          # 必要なファイルをすべて deploy_package に集める
+          # 1. ビルド成果物のコピー
           cp -r ./frontend/.next ./deploy_package/
           cp -r ./frontend/public ./deploy_package/ 2>/dev/null || true
+          
+          # 2. Azure上でのビルドに必要なソースコードのコピー
+          # (image_950a1d.png のパス解決エラーを防ぐために src/app フォルダを含めます)
           cp -r ./frontend/src ./deploy_package/ 2>/dev/null || true
           cp -r ./frontend/app ./deploy_package/ 2>/dev/null || true
+          
+          # 3. 設定ファイル群のコピー
           cp ./frontend/package.json ./deploy_package/
           cp ./frontend/package-lock.json ./deploy_package/
           cp ./frontend/next.config.js ./deploy_package/
+          # @/ エイリアス解決に必須な設定ファイルを追加
+          cp ./frontend/jsconfig.json ./deploy_package/ 2>/dev/null || true
+          cp ./frontend/tsconfig.json ./deploy_package/ 2>/dev/null || true
           
+          # 4. ZIP化
           cd deploy_package
           zip -r ../app.zip .
           cd ..
@@ -63,13 +73,12 @@ jobs:
           name: node-app-zip
           path: .
 
-      - name: Unzip deployment package
-        run: unzip app.zip
-
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3 
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          # 以前確認した正しいシークレット名を使用します
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D939D61B8137457EBCA6E559E44599F2 }}
-          package: .
+          # ZIPファイルを直接デプロイ対象に指定して効率化します
+          package: ./app.zip
