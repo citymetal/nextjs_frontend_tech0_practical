@@ -33,7 +33,7 @@ jobs:
         run: npm run build || true 
         working-directory: ./frontend
         env: # ★ここを追加
-          NEXT_PUBLIC_API_ENDPOINT: ${{ secrets.NEXT_PUBLIC_API_ENDPOINT }}        
+          NEXT_PUBLIC_API_ENDPOINT: https://tech0-gen-11-step3-2-py-59.azurewebsites.net        
 
       # デプロイパッケージの作成（zip化）
       - name: Create Deployment Package
