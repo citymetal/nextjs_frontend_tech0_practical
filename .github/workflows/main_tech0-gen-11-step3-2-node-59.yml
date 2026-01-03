@@ -38,13 +38,14 @@ jobs:
       # デプロイパッケージの作成（zip化）
       - name: Create Deployment Package
         run: |
-          # zipファイル作成に必要なファイルをコピー
           mkdir -p deploy_package
+          # 必要な設定ファイルとソースコードのみをコピー（node_modulesは除外）
           cp -r ./frontend/.next ./deploy_package/
-          # cp -r ./frontend/node_modules ./deploy_package/ # ★この行を削除またはコメントアウト
           cp ./frontend/package.json ./deploy_package/
-          cp ./frontend/package-lock.json ./deploy_package/ # ★追加：これがあるとAzureが安定します
+          cp ./frontend/package-lock.json ./deploy_package/
           cp ./frontend/next.config.js ./deploy_package/
+          # publicフォルダがある場合は以下も追加
+          # cp -r ./frontend/public ./deploy_package/
           
           # zipファイル作成
           cd deploy_package
