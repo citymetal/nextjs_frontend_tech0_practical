@@ -34,10 +34,9 @@ jobs:
       - name: Create Deployment Package
         run: |
           mkdir -p deploy_package
-          # ★修正ポイント：ビルド済みの .next に加え、ソースコード本体もコピーする
+          # 必要なファイルをすべて deploy_package に集める
           cp -r ./frontend/.next ./deploy_package/
           cp -r ./frontend/public ./deploy_package/ 2>/dev/null || true
-          # src フォルダや app フォルダがある場合、それらもコピーに含める
           cp -r ./frontend/src ./deploy_package/ 2>/dev/null || true
           cp -r ./frontend/app ./deploy_package/ 2>/dev/null || true
           cp ./frontend/package.json ./deploy_package/
@@ -62,7 +61,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app-zip
-          path: .  # ★現在のディレクトリに展開するように指定
+          path: .
 
       - name: Unzip deployment package
         run: unzip app.zip
@@ -72,6 +71,5 @@ jobs:
         uses: azure/webapps-deploy@v3 
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          slot-name: 'Production'
-          package: . 
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D939D61B8137457EBCA6E559E44599F2 }}
+          package: .
