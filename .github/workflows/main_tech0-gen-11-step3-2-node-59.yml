@@ -41,8 +41,9 @@ jobs:
           # zipファイル作成に必要なファイルをコピー
           mkdir -p deploy_package
           cp -r ./frontend/.next ./deploy_package/
-          cp -r ./frontend/node_modules ./deploy_package/
+          # cp -r ./frontend/node_modules ./deploy_package/ # ★この行を削除またはコメントアウト
           cp ./frontend/package.json ./deploy_package/
+          cp ./frontend/package-lock.json ./deploy_package/ # ★追加：これがあるとAzureが安定します
           cp ./frontend/next.config.js ./deploy_package/
           
           # zipファイル作成
