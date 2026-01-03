@@ -32,6 +32,8 @@ jobs:
       - name: Next.js build (No Lint)
         run: npm run build || true 
         working-directory: ./frontend
+        env: # ★ここを追加
+          NEXT_PUBLIC_API_ENDPOINT: ${{ secrets.NEXT_PUBLIC_API_ENDPOINT }}        
 
       # デプロイパッケージの作成（zip化）
       - name: Create Deployment Package
