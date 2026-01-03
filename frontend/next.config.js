@@ -1,11 +1,9 @@
-require('dotenv').config()
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone', // ★この行を追加しました（軽量化モードの設定）
+  output: 'standalone', // 軽量化モードの設定
   env: {
-    // Reference a variable that was defined in the .env file and make it available at Build Time
-    API_ENDPOINT: process.env.API_ENDPOINT,
+    // Azure の「環境変数」に登録してある名前（NEXT_PUBLIC_API_ENDPOINT）に合わせます
+    API_ENDPOINT: process.env.NEXT_PUBLIC_API_ENDPOINT,
   },
 }
 
