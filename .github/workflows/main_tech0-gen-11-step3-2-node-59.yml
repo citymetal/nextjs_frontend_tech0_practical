@@ -16,38 +16,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js version
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: npm install
-        run: npm install
-        working-directory: ./frontend 
-
-      - name: Next.js build
-        run: npm run build
-        working-directory: ./frontend
-        env:
-          # ビルド時にバックエンドの接続先を固定します
-          NEXT_PUBLIC_API_ENDPOINT: https://tech0-gen-11-step3-2-py-59.azurewebsites.net        
-
       - name: Create Deployment Package
         run: |
-          # 1. デプロイ用の作業ディレクトリ作成
           mkdir -p deploy_package
+          # frontend フォルダの中身（ソースコード一式）を作業ディレクトリにコピー
+          cp -r ./frontend/. ./deploy_package/
           
-          # 2. スタンドアロン出力された実行ファイルをルートにコピー
-          # (image_94ac45.png の設定により生成された成果物を使用)
-          cp -r ./frontend/.next/standalone/. ./deploy_package/
+          # 不要な巨大フォルダ（node_modules やビルド成果物）を ZIP から除外
+          # これにより ZIP Deploy failed エラーを回避します
+          rm -rf deploy_package/node_modules
+          rm -rf deploy_package/.next
           
-          # 3. ★重要★ 404エラーを防ぐため、静的ファイルを正しい位置に配置
-          # ブラウザが参照する .next/static フォルダを手動で作成・コピーします
-          mkdir -p deploy_package/.next/static
-          cp -r ./frontend/.next/static/. ./deploy_package/.next/static/
-          cp -r ./frontend/public/. ./deploy_package/public/ 2>/dev/null || true
-          
-          # 4. ZIP化
           cd deploy_package
           zip -r ../app.zip .
           cd ..
