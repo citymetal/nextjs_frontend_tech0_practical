@@ -19,11 +19,10 @@ jobs:
       - name: Create Deployment Package
         run: |
           mkdir -p deploy_package
-          # frontend フォルダの中身（ソースコード一式）を作業ディレクトリにコピー
+          # frontend フォルダの全ソースコードをコピー
           cp -r ./frontend/. ./deploy_package/
           
-          # 不要な巨大フォルダ（node_modules やビルド成果物）を ZIP から除外
-          # これにより ZIP Deploy failed エラーを回避します
+          # 重い node_modules や以前のビルド成果物は削除して ZIP を軽くする
           rm -rf deploy_package/node_modules
           rm -rf deploy_package/.next
           
