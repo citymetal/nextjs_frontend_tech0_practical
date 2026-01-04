@@ -25,32 +25,27 @@ jobs:
         run: npm install
         working-directory: ./frontend 
 
-      - name: Next.js build (No Lint)
-        run: npm run build || true 
+      - name: Next.js build
+        run: npm run build
         working-directory: ./frontend
         env:
-          # ビルド時にバックエンドURLを埋め込みます
+          # ビルド時にバックエンドの接続先を固定します
           NEXT_PUBLIC_API_ENDPOINT: https://tech0-gen-11-step3-2-py-59.azurewebsites.net        
 
       - name: Create Deployment Package
         run: |
+          # 1. デプロイ用の作業ディレクトリ作成
           mkdir -p deploy_package
-          # 1. ビルド成果物のコピー
-          cp -r ./frontend/.next ./deploy_package/
-          cp -r ./frontend/public ./deploy_package/ 2>/dev/null || true
           
-          # 2. Azure上でのビルドに必要なソースコードのコピー
-          # (image_950a1d.png のパス解決エラーを防ぐために src/app フォルダを含めます)
-          cp -r ./frontend/src ./deploy_package/ 2>/dev/null || true
-          cp -r ./frontend/app ./deploy_package/ 2>/dev/null || true
+          # 2. スタンドアロン出力された実行ファイルをルートにコピー
+          # (image_94ac45.png の設定により生成された成果物を使用)
+          cp -r ./frontend/.next/standalone/. ./deploy_package/
           
-          # 3. 設定ファイル群のコピー
-          cp ./frontend/package.json ./deploy_package/
-          cp ./frontend/package-lock.json ./deploy_package/
-          cp ./frontend/next.config.js ./deploy_package/
-          # @/ エイリアス解決に必須な設定ファイルを追加
-          cp ./frontend/jsconfig.json ./deploy_package/ 2>/dev/null || true
-          cp ./frontend/tsconfig.json ./deploy_package/ 2>/dev/null || true
+          # 3. ★重要★ 404エラーを防ぐため、静的ファイルを正しい位置に配置
+          # ブラウザが参照する .next/static フォルダを手動で作成・コピーします
+          mkdir -p deploy_package/.next/static
+          cp -r ./frontend/.next/static/. ./deploy_package/.next/static/
+          cp -r ./frontend/public/. ./deploy_package/public/ 2>/dev/null || true
           
           # 4. ZIP化
           cd deploy_package
@@ -78,7 +73,5 @@ jobs:
         uses: azure/webapps-deploy@v3 
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          # 以前確認した正しいシークレット名を使用します
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D939D61B8137457EBCA6E559E44599F2 }}
-          # ZIPファイルを直接デプロイ対象に指定して効率化します
           package: ./app.zip
